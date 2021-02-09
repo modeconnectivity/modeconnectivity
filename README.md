@@ -1,16 +1,21 @@
-### Hi there 👋
 
-<!--
-**modeconnectivity/modeconnectivity** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+#Mode Connectivity Source code
 
-Here are some ideas to get you started:
+##Requirements
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+ * Python 3.7
+ * PyTorch 1.7
+ * Pandas
+
+The detailed package requirement is given in ```requirements.txt``` (```pip install -r
+requirements.txt```)
+
+##Usage
+
+
+The scripts ```main_{mnist_fcn,cifar10_fcn,cifar10_vgg}.sh``` give the workflow
+to reproduce the figures appearing in the article for the respective models and
+datasets.
+
+
+
