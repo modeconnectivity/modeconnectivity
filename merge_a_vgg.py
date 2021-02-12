@@ -309,8 +309,6 @@ if __name__ == '__main__':
                     id_max = chkpt_id[0]
                     f =os.path.join(entry_dir, f"checkpoint_draw_{id_max}.pth")
 
-                    f_min =os.path.join(entry_dir, f"checkpoint_min_draw_{id_max}.pth")
-
                     #for f in f_checkpoints:
                     name = os.path.basename(f).split('.')[0]
 
@@ -322,14 +320,6 @@ if __name__ == '__main__':
                     # sort by train loss
                     idx_min = quant.idxmin(axis=0)["train", "loss"].to_frame(name="epoch") # the epochs for each draw
                     #draw_range = idx_min.dropna().index
-                    #levels = list( quant.columns.levels[:2] + [[eid]] + quant.columns.levels[-1:])
-                    #data=quant.pivot(index="epochs", columns=).min(axis=0).to_frame(name="value"),
-                    #col_order =["set", "stat", "layer", "draw"]
-            #quant = pd.melt(quant.reset_index(), id_vars="epochs").pivot(index="epochs", columns=col_order, values="value")
-
-                    #quant.columns = pd.MultiIndex.from_product(levels,
-                    #                                           names=  quant.columns.names[:2] + ['layer', 'draw'],
-
 #                                                        )
 
                     #idx_min = pd.melt(idx_min.reset_index(), id_vars="epochs").pivot(index="epochs", columns=['layer', 'draw'], values="value")

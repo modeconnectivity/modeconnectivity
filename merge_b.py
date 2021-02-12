@@ -75,8 +75,6 @@ def process_df(quant, dirname, uid, args=None, args_model=None, save=True):
     quant_ref_val = quant_ref.iloc[np.repeat(np.arange(N_S), N_L)].values
     quant_rel = (quant.loc[:, Idx[:, :, 1:]] - quant_ref_val).abs()
     #quant_plus = quant.loc[:, Idx[:, :, 1:]] + quant_ref + 1e-10
-    #quant_rel /= quant_plus
-    #quant_rel *= 2
 
     # utils.to_latex(output_root, quant.loc[:, Idx[:, :, 1:]], table_format, key_err="error")
     utils.to_latex(output_root, quant_rel, table_format, key_err="error")
@@ -87,167 +85,11 @@ def process_df(quant, dirname, uid, args=None, args_model=None, save=True):
     # palette=sns.color_palette(n_colors=2)  # the two datasets
     palette=sns.color_palette(n_colors=N_L)  # the N_L layers
     # bp = sns.catplot(
-        # data = df_plot.query('layer > 0'),
-        # #col='log_mult',
-        # hue='width',
-        # dodge=False,
-        # row='stat',
-        # col='set',
-        # #col='log_mult',
-        # x='layer',
-        # y='value',
-        # #ax=axes[0],
-        # #kind='line',
-        # #ylabel='%',
-        # #ci=100,
-        # #col_wrap=2,
-        # #facet_kws={
-        # #    'sharey': False,
-        # #    'sharex': True
-        # #}
-    # )
-    # bp.axes[0,0].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[errors["train"][0].iloc[0].values], color="red")
-
-    # bp.axes[0,1].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[errors["test"][0].iloc[0].values], color="red")
-
-    # bp.axes[0,0].set_title("Error")
-    # bp.axes[0,0].set_ylabel("error (%)")
-
-    # # bp2 = sns.boxplot(
-        # # data = df_plot.query('layer >0 & stat =="loss"'),
-        # # x="layer",
-        # # hue="width",
-        # # doge=False,
-        # # y="value",
-        # # ax=axes[1]
-    # # )
-
-
-
-    # bp.axes[1,0].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[losses["train"][0].iloc[0].values], color="red", label="full network")
-    # bp.axes[1,1].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[losses["test"][0].iloc[0].values], color="red", label="full network")
-    # bp.axes[1,0].set_title("Loss")
-    # bp.axes[1,0].set_ylabel("loss")
-    # #plt.legend()
-    # #f.legend()
-    # bp.fig.subplots_adjust(top=0.85, left=0.10)
-    # plt.savefig(fname=os.path.join(output_root, 'boxplot.pdf'))
-
-    # rp = sns.relplot(
-        # data = df_plot.query('layer > 0'),
-        # #col='log_mult',
-        # hue='width',
-        # col='set',
-        # row='stat',
-        # # row='stat',
-        # #col='log_mult',
-        # x='layer',
-        # y='value',
-        # #style='event',
-        # markers=True,
-        # #ax=axes[0],
-        # kind='line',
-        # legend="auto",
-        # #"full",
-        # #ylabel='%',
-        # #ci=100,
-        # #col_wrap=2,
-        # facet_kws={
-            # 'sharey': False,
-            # 'sharex': True,
-            # 'legend_out':True,
-        # }
-    # )
-
-
-    # rp.axes[0,0].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[errors["train"][0].iloc[0].values], color="red")
-
-    # rp.axes[0,1].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[errors["test"][0].iloc[0].values], color="red")
-
-    # rp.axes[0,0].set_title("Error")
-    # rp.axes[0,0].set_ylabel("error (%)")
-
-    # # rp.axes[1,0].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[losses["train"][0].iloc[0].values], color="red", label="full network")
-    # # rp.axes[1,1].plot(np.linspace(0, N_L, num=N_L)-1, (N_L)*[losses["test"][0].iloc[0].values], color="red", label="full network")
-    # rp.axes[1,0].set_title("Loss")
-    # rp.axes[1,0].set_ylabel("loss")
-
-    # #rp.axes[0,1].legend()
-    # #plt.legend()
-    # rp.fig.legend()
-    # #rp.fig.subplots_adjust(top=0.9, left=1/rp.axes.shape[1] * 0.1)
-    # rp.fig.subplots_adjust(top=0.85, left=0.10)
-    # if args_model is not None and args is not None:
-       # removed = "width / {}".format(args.fraction) if hasattr(args, 'fraction') and args.fraction is not None else args.remove
-       # rp.fig.suptitle('ds = {}, width = {}, removed = {}, draw = {}'.format(args_model.dataset, args_model.width, removed, args.ndraw))
-    # #rp.set(yscale='log')
-    # #rp.set(ylabel='%')
-    # plt.savefig(fname=os.path.join(output_root, 'relplot.pdf'))
-
-    # rel_error = pd.DataFrame()
-    # rel_losses = pd.DataFrame()
-    # for W in quant.columns.levels[2]:  # for each width
-        # idx_col = (errors.columns.get_level_values("layer") > 0) & (errors.columns.get_level_values("width") == W)
-        # rel_error = pd.concat([rel_error, abs(errors.loc[:, idx_col] - errors[0][W][1]) / errors[0][W][1]], axis=1, ignore_index=False)
-        # rel_losses = pd.concat([rel_losses,  abs(losses.loc[:, idx_col] - losses[0][W][1]) / losses[0][W][1]], axis=1, ignore_index=False)
-
-    # #rel_error_plot = pd.melt(rel_error.reset_index(), id_vars="draw")#, id_vars="draw")
-    # #rel_losses_plot = pd.melt(rel_losses.min(axis=0).reset_index(), id_vars="layer")#, id_vars="draw")
 
     df_plot = pd.melt(df_reset, id_vars='draw')#.query("layer>0")
     #errors_plot = pd.melt(errors.reset_index(), id_vars="draw").query("layer>0")
     #losses_plot = pd.melt(losses.reset_index(), id_vars="draw").query("layer>0")
     cols = ["stat", "set", "layer", "width"]
-    # plt.figure()
-
-    # if N_L == 1:
-        # col = "stat"
-        # col_order = ["loss", "error"]
-        # row="layer"
-        # row_order =[1]
-    # else:
-        # col = "layer"
-        # col_order=range(1, N_L+1)
-        # row ="stat"
-        # row_order = ["loss", "error"]
-
-    # #lp = rel_losses.min(axis=0).plot(kind='line', hue='width', x='layer')
-    # mp = sns.relplot(
-        # #data=rel_losses.min(axis=0).to_frame(name="loss"),
-        # # data=df_plot_rel, #df_plot.pivot(index="draw", columns=cols).min(axis=0).to_frame(name="value"),
-        # data=df_plot.pivot(index="draw", columns=cols).min(axis=0).to_frame(name="value"),
-        # # style="layer",
-        # row=row,
-        # row_order = row_order,
-        # #row="stat",
-        # #col_order=["train", "test"],
-        # col=col,
-        # col_order=col_order,
-        # x="width",
-        # y="value",
-        # kind='line',
-        # legend="full",
-        # # legend_out=True,
-        # palette=palette,
-        # hue='set',
-        # hue_order=["train", "test"],
-        # # style_order=["],
-        # markers=True,
-        # facet_kws={
-            # 'legend_out': True,
-            # 'sharey': 'row' if (N_L>1) else False ,
-            # 'sharex': True
-        # }
-        # #y="value",
-    # )
-
-    # # mp.fig.set_size_inches(10, 10)
-    # if args_model is not None:
-        # mp.fig.suptitle("(B) FCN {}".format(args_model.dataset.upper()))
-
-    # mp.legend.set_title("Datasets")
-    # fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharex=False)
-
     # xlabels=[str(i) for i in range(N_W)]
     is_vgg=False
     dataset="MNIST"
