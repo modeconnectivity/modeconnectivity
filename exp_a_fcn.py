@@ -35,6 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr_gamma',  type=float, default=0.5, help='the gamma mult factor for the lr scheduler')
     parser.add_argument('--save_model', action='store_true', default=True, help='stores the model after some epochs')
     parser.add_argument('--nepoch', type=int, default=400, help='the number of epochs to train for')
+    parser.add_argument('--min_epochs', type=int, default=100, help='the minimum number of epochs to train for')
     parser.add_argument('--batch_size', '-bs', type=int, default=100, help='the dimension of the batch')
     parser.add_argument('--debug', action='store_true', help='debug')
     parser.add_argument('--ndraw', type=int, default=20, help='The number of permutations to test')
@@ -326,6 +327,7 @@ if __name__ == '__main__':
 
 
 
+    MIN_EPOCH = args.min_epochs
     stop = False
     separated = False
     epoch =  start_epoch
@@ -370,7 +372,7 @@ if __name__ == '__main__':
 
 
         separated = frozen and err_min == 0
-        frozen = err_min == 0 and not frozen # will test with frozen network next time, prevent from freezing twice in a row
+        frozen = err_min == 0 and not frozen and epoch > MIN_EPOCH# will test with frozen network next time, prevent from freezing twice in a row
 
         if frozen:
             print("Freezing the next iteration", file=logs)

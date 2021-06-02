@@ -26,16 +26,12 @@ if __name__ == '__main__':
     parser.add_argument('--dataroot', '-dr', default='./data/', help='the root for the input data')
     parser.add_argument('--output_root', '-oroot', type=str, help='output root for the results')
     parser.add_argument('--name', default = '', type=str, help='the name of the experiment')
-    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-2, help='leraning rate')
+    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-3, help='leraning rate')
     parser.add_argument('--weight_decay', type=float, default=0, help="the weight decay for SGD (L2 pernalization)")
     parser.add_argument('--momentum', type=float, default=0.95, help="the momentum for SGD")
-    parser.add_argument('--lr_mode', '-lrm', default="manual", choices=["max", "hessian", "num_param", "manual"], help="the mode of learning rate attribution")
-    parser.add_argument('--lr_step', '-lrs', type=int, default=30, help='if any, the step for the learning rate scheduler')
-    parser.add_argument('--lr_gamma',  type=float, default=0.5, help='the gamma mult factor for the lr scheduler')
-    parser.add_argument('--lr_update', '-lru', type=int, default=0, help='if any, the update of the learning rate')
     parser.add_argument('--save_model', action='store_true', default=True, help='stores the model after some epochs')
-    parser.add_argument('--nepoch', type=int, default=1000, help='the number of epochs to train for')
-    parser.add_argument('--depth', '-L', type=int, default=3, help='the number of layers for the network')
+    parser.add_argument('--nepoch', type=int, default=200, help='the number of epochs to train for')
+    parser.add_argument('--depth', '-L', type=int, default=5, help='the number of hidden layers for the network')
     parser_normalize = parser.add_mutually_exclusive_group()
     parser_normalize.add_argument('--normalize', action='store_true', dest='normalize',  help='normalize the input')
     parser_normalize.add_argument('--no-normalize', action='store_false', dest='normalize', help='normalize the input')
@@ -45,7 +41,6 @@ if __name__ == '__main__':
     parser.add_argument('--size_max', type=int, default=None, help='maximum number of traning samples')
     parser.add_argument('--width', '-w', type=int, help='The width of the layers')
     parser.add_argument('--checkpoint', help='path of the previous computation checkpoint')
-    parser.add_argument('--gd_mode', '-gdm', default='stochastic', choices=['full', 'stochastic'], help='whether the gradient is computed full batch or stochastically')
 
 
     args = parser.parse_args()
@@ -165,8 +160,6 @@ if __name__ == '__main__':
     print("Optimizer: {}".format(optimizer), file=logs, flush=True)
     #lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
     lr_scheduler = None
-    if args.lr_step>0:
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step, gamma=args.lr_gamma)
 
     if 'optimizer' in checkpoint.keys():
 
@@ -340,8 +333,6 @@ if __name__ == '__main__':
             file=logs, flush=True)
 
 
-        if args.lr_step>0:
-            lr_scheduler.step()
 
 
         if stop or (epoch) % 5 == 0:  # we save every 5 epochs
