@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 The datasets (MNIST, CIFAR-10) will be downloaded by PyTorch, default dataroot: ```data/```
 
-## Training
+## Workflow
 
 
 
@@ -26,19 +26,10 @@ The scripts ```main_{mnist_fcn,cifar10_fcn,cifar10_vgg}.sh``` give the workflow
 to reproduce the figures appearing in the article for the respective models and
 datasets.
 
-Simply run them to train the models. 
+Simply run them to train and evaluate the models. 
 
-## Evaluation
 
-To evaluate my model on ImageNet, run:
-
-```eval
-python eval.py --model-file mymodel.pth --benchmark imagenet
-```
-
->📋  Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
-
-## Pre-trained Models
+## Pre-trained Models TODO!
 
 You can download pretrained models here (TODO!):
 
@@ -47,7 +38,7 @@ You can download pretrained models here (TODO!):
 
 
 
-## Results
+## Results TODO!
 
 Our model achieves the following performance on :
 
@@ -62,6 +53,6 @@ Our model achieves the following performance on :
 
 ## Contributing
 
->📋  Pick a licence and describe how to contribute to your code repository. 
+MIT License
 
 
