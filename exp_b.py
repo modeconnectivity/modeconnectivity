@@ -337,7 +337,14 @@ if __name__ == '__main__':
             print("Can't load mode (error {})".format(e))
         # else: # not a file, should be a vgg name
 
-            # checkpoint = dict()
+        fn_chkpt = os.path.join(path_output, "eval_copy.pth")
+        if os.path.isfile(fn_chkpt):
+            try:
+                checkpoint = torch.load(fn_chkpt, map_location=device)
+                args.__dict__.update(checkpoint['args'].__dict__)
+            except:
+                print("Can't load model ", fn_chkpt)
+                # checkpoint = dict()
 
             # dataset = args.dataset
     keep = 1 - 1 / args.fraction
@@ -414,6 +421,13 @@ if __name__ == '__main__':
     #if 'quant' in checkpoint.keys():
     #    quant.update(checkpoint['quant'])
 
+    if "quant" in checkpoint.keys():
+        quant.update(checkpoint["quant"])
+
+    if "df_mult" in checkpoint.keys():
+        df_mult.update(checkpoint["df_mult"])
+
+    t_start = len(quant.dropna().index) + 1
 
 
     #classes = torch.arange(num_classes).view(1, -1).to(device)  # the different possible classes
@@ -541,8 +555,8 @@ if __name__ == '__main__':
 
 
     #mult = 2**args.log_mult
-    for t in range(1, args.ndraw+1):
-        for l in range(1, N_L+1):
+    for t in range(t_start, args.ndraw+1):
+        for l in range(N_L, 0, -1):
 
 
             def eval_mult(mult, out_class, out):
@@ -561,7 +575,6 @@ if __name__ == '__main__':
             out_class = get_output_class(classifier, train_loader)
 
 
-            error = out['error']
             # mult0 = 1
             # res = minimize(eval_mult, mult0, args=out_class, method='BFGS')#l, options={'disp': True})
             #res = minimize_scalar(eval_mult, args=(out_class,), bounds=(0, 2**(N_L+2-l)), method='bounded')
@@ -569,6 +582,7 @@ if __name__ == '__main__':
             #res = minimize_scalar(eval_mult, args=(out_class,), method='golden')
             print(res, file=logs)
             loss = res.fun
+            error = out['error']
             mult = res.x
             #else:
             #    mult=2**(N_L+1-l) #res.multult0

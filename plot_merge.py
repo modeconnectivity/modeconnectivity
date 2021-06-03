@@ -37,13 +37,16 @@ import utils
 
 from sklearn.linear_model import LogisticRegression
 
-#from torchvision import models, datasets, transforms
 
 try:
     from tqdm import tqdm
 except:
     def tqdm(x): return x
 
+"""
+Plot the data contained in quant (keys: the name of the experiments), agains the reference (contained in stats_ref)
+dirname: the output directory name
+"""
 def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=True, split=False):
 
     global table_format
@@ -71,126 +74,61 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
     quant.sort_index(axis=1, inplace=True)
     quant.loc[:, cols_error] *= 100  # in %
     quant.groupby(level=["experiment", "stat", "set"], axis=1, group_keys=False).describe().to_csv(os.path.join(output_root, 'describe.csv'))
-    #csvlosses.to_csv(os.path.join(output_root, 'losses.csv'))
-    #errors.to_csv(os.path.join(output_root, 'errors.csv'))
 
-    #quant_describe = pd.DataFrame(group.describe().rename(columns={'value': name}).squeeze()
-    #                              for (name, group) in quant.groupby(level=["stat", "set"], axis=1))
-    #quant_describe.to_csv(os.path.join(output_root, 'describe.csv'))
-
-
-    df_reset = quant.reset_index()
-    df_plot = pd.melt(df_reset, id_vars="var")#.query("layer>0")
-    # df_plot_no_0 = df_plot.query('layer>0')
-    # df_plot_0 = df_plot.query('layer==0')
-    #relative quantities
-    # quant_ref = quant.loc[1, Idx[:, :, 0, :]]  # for all the  widths
-    # N_S = len(quant_ref)
     quant_ref = None
     Ts = { -1: 0, 0: 0, 1: 12.71, 2: 4.303, 3: 3.182, 4: 2.776, 9: 2.262}
-    quant.where(quant != 0, 6.1*10**(-5),  inplace=True)
-    quant_log = np.log10(quant)
+    # quant.where(quant != 0, 6.1*10**(-5),  inplace=True)
+    if args.yscale == "log":
+        quant_log = np.log10(quant)
     # quant_log.loc[:, Idx['B', "loss", :, 10]]
-    if stats_ref is not None:
+    if stats_ref is not None:  # the reference to plot against
         N_S = len(stats_ref.columns)
         quant_ref_merge = pd.DataFrame()
         stats_ref.loc[:, "error"] = stats_ref["error"].values * 100
-        # for key in keys:  # for every experiment, have to filter
-            # quant_ref_merge = pd.concat([quant_ref_merge, quant_ref])
-            # # N_S_key = len(quant[key].columns.get_level_values("stat").unique())
-            # N_L_key = len(quant[key].columns.get_level_values("layer").unique())
-            # quant_ref_key = stats_ref.iloc[np.tile(np.arange(N_S).reshape(N_S, 1), (N_L_key)).ravel()].to_frame(name="value").droplevel("layer")
-            # quant_ref_merge = pd.concat([quant_ref_merge, quant_ref_key])
 
         if "layer" in stats_ref.columns.names:
             stats_ref.columns = stats_ref.columns.droplevel('layer')
+
+        # confidence intervals for the reference loss
         quant_ref = stats_ref.agg(['mean', 'count', 'std'])
-        quant_ref_log = np.log10(stats_ref).agg(['mean', 'count', 'std'])
-        quant_ref.loc['se'] = quant_ref.loc['std'] / np.sqrt(quant_ref.loc['count'])
+
+        quant_ref.loc['se'] = quant_ref.loc['std'] / np.sqrt(quant_ref.loc['count'])  # standard error
         quant_ref.loc['ci95'] = [ Ts[n-1] * se for (n, se) in zip(quant_ref.loc['count'], quant_ref.loc['se']) ] # 95% CI
-        quant_ref_log.loc['se'] = quant_ref_log.loc['std'] / np.sqrt(quant_ref_log.loc['count'])
-        quant_ref_log.loc['ci95'] = [ Ts[n-1] * se for (n, se) in zip(quant_ref_log.loc['count'], quant_ref_log.loc['se']) ] # 95% CI
-        # try:
-            # utils.to_latex(output_root, (quant-quant_ref_merge.value.values).abs(), table_format, key_err="error")
-        # except:
-            # pass
-    # quant_rel = (quant.loc[:, Idx[:, :, 1:]] - quant_ref_val).abs()
-    #quant_plus = quant.loc[:, Idx[:, :, 1:]] + quant_ref + 1e-10
-    #quant_rel /= quant_plus
-    #quant_rel *= 2
 
-    # utils.to_latex(output_root, quant.loc[:, Idx[:, :, 1:]], table_format, key_err="error")
-    # utils.to_latex(output_root, quant, table_format, key_err="error")
+        if args.yscale == "log":
+            quant_ref_log = np.log10(stats_ref).agg(['mean', 'count', 'std'])
+            quant_ref_log.loc['se'] = quant_ref_log.loc['std'] / np.sqrt(quant_ref_log.loc['count'])
+            quant_ref_log.loc['ci95'] = [ Ts[n-1] * se for (n, se) in zip(quant_ref_log.loc['count'], quant_ref_log.loc['se']) ] # 95% CI
 
-    # df_reset_rel = quant_rel.reset_index()
-    # df_plot_rel = pd.melt(df_reset_rel, id_vars="draw")
-
-
-
-    # rp = sns.relplot(
-        # #data=rel_losses.min(axis=0).to_frame(name="loss"),
-        # # data=df_plot_rel if not is_vgg else df_plot_rel.pivot(index="steps", columns=col_order).min(axis=0).to_frame(name="value"),
-        # data=df_plot.pivot(index="draw", columns=col_names).min(axis=0).to_frame(name="value"),
-        # #hue="width",
-        # hue="experiment",
-        # hue_order=["A", "B"],
-        # col="stat",
-        # col_order=["loss", "error"],
-        # # col_wrap=3,
-        # row="set",
-        # row_order=["train", "test"],
-        # x="layer",
-        # y="value",
-        # kind='line',
-        # legend="full",
-        # # style='set',
-        # ci='sd',
-        # palette=palette,
-        # #style='layer',
-        # markers=False,
-        # dashes=True,
-        # #legend_out=True,
-        # facet_kws={
-            # 'sharey': False,
-            # 'sharex': True
-        # }
-        # #y="value",
-    # )
-
-    is_vgg = 'vgg' in dirname
-    dataset = 'CIFAR10' if 'cifar' in dirname else 'MNIST'
     # if args_model is not None:
 
-    # if is_vgg:
-        # xlabels=["0", "conv1", "conv2", "conv3", "conv4", "conv5", "conv6", "conv7", "conv8", "fc1", "fc2"]
     # else:
     xlabels=[str(i) for i in range(N_L)]
 
     logstr = "_log" if args.yscale == "log" else ""
+    has_ref = quant_ref is not None
 
     # if len(keys) <= 2:
-        # palette=sns.color_palette(n_colors=2)[2-len(keys):] # the two experiments
-    # else:
-    if "dropout" in keys:
-        keys = keys[::-1]
-
     palette=sns.color_palette(n_colors=len(keys))
 
     if not split:
         fig, axes = plt.subplots(2, 1, figsize=(4, 8), sharex=False)
     # sns.set(font_scale=1,rc={"lines.linewidth":3})
 
-    # fig.suptitle("{} {}".format('VGG' if is_vgg else 'FCN', dataset.upper()))
     k = 0
 
+    # the confidence intervals
     df_ci = quant.describe()
-    df_ci_log = quant_log.describe()
-
     df_ci.loc["ymax", :] =  [mean + Ts[int(n-1)] / np.sqrt(n) * std for (mean, std, n) in zip(df_ci.loc["mean",  :], df_ci.loc["std", :], df_ci.loc["count", :])]
     df_ci.loc["ymin", :] = [mean - Ts[int(n-1)] / np.sqrt(n) * std for (mean, std, n) in zip(df_ci.loc["mean",  :], df_ci.loc["std", :], df_ci.loc["count", :])]
+
+    #confidence intervals for the log plot
+    if args.yscale == "log":
+        df_ci_log = quant_log.describe()
+        df_ci_log.loc["ymax", :] =  [mean + Ts[int(n-1)] / np.sqrt(n) * std for (mean, std, n) in zip(df_ci_log.loc["mean",  :], df_ci_log.loc["std", :], df_ci_log.loc["count", :])]
+        df_ci_log.loc["ymin", :] = [mean - Ts[int(n-1)] / np.sqrt(n) * std for (mean, std, n) in zip(df_ci_log.loc["mean",  :], df_ci_log.loc["std", :], df_ci_log.loc["count", :])]
+
     #rp.set_axis_labels("layer", "Loss", labelpad=10)
-    df_ci_log.loc["ymax", :] =  [mean + Ts[int(n-1)] / np.sqrt(n) * std for (mean, std, n) in zip(df_ci_log.loc["mean",  :], df_ci_log.loc["std", :], df_ci_log.loc["count", :])]
-    df_ci_log.loc["ymin", :] = [mean - Ts[int(n-1)] / np.sqrt(n) * std for (mean, std, n) in zip(df_ci_log.loc["mean",  :], df_ci_log.loc["std", :], df_ci_log.loc["count", :])]
     #quant.loc[1, Idx["loss", :, 0]].lineplot(x="layer_ids", y="value", hue="")
     for i, stat in enumerate(["loss","error" ]):
         for j, setn in enumerate(["train","test"]):
@@ -216,7 +154,6 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
             df_plot = pd.melt(df_plot.reset_index(), id_vars="var")
             lp = sns.lineplot(
                 #data=rel_losses.min(axis=0).to_frame(name="loss"),
-                # data=df_plot_rel if not is_vgg else df_plot_rel.pivot(index="steps", columns=col_order).min(axis=0).to_frame(name="value"),
                 data=df_plot,
                 #hue="width",
                 hue="experiment",
@@ -256,25 +193,13 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
             if setn == "test":
                 ax.set_ylim(df_plot["value"].min(), df_plot["value"].max())
 
-            if log_plot:
-                # # ax.set_yticks([10**(p) for p in ax.get_yticks()])
-                # # ax.set_ylabel([10^
-                # vals = ax.get_yticks()
-                # ax.get_yaxis().set_major_locator(matplotlib.ticker.LogLocator())
-                # # ax.yaxis.get_major_locator().tick_values(vals[0], vals[-1])
+            if log_plot:  # set the  axis in power of 10 values
 
                 ax.get_yaxis().get_major_formatter().set_useMathText(True)
-
                 ax.get_yaxis().set_major_formatter(lambda x, pos:  "$10^{" + f"{int(x)}" + "}$")
-                # ax.get_yaxis().set_major_locator
-                # ax.get_yaxis().get_major_formatter().set_locs(vals)
-                # ax.get_yaxis().get_major_formatter().set_locs(vals)
-                # ax.get_yaxis().get_major_formatter().format_ticks([10**(i) for i in vals])
-                # ax.set_yticks([10**(i) for i in ax.get_yticks()])
-            # ax.tick_params(labelbottom=True)
 
 
-            if quant_ref is not None:
+            if has_ref:
                 # data_ref  = quant_ref[stat, setn].reset_index()
 
                 if not log_plot:
@@ -294,7 +219,7 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
 
             if split:
                 # if k == 1:
-                labels=keys + ["ref."]
+                labels=keys + has_ref*["ref."]
                 if setn == "test":  # reset the name (not log)
                     logstr = ""
                 fig.legend(handles=ax.lines, labels=labels,
@@ -311,7 +236,7 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
     # fig.subplots_adjust(top=0.85)
     # if is_vgg:
     if not split:
-        labels=keys + ["ref."]
+        labels=keys + has_ref*["ref."]
         fig.legend(handles=ax.lines, labels=labels,
                   # title="Exp.",
                    loc="upper right", borderaxespad=0, bbox_to_anchor=(0.9,0.9))#, bbox_transform=fig.transFigure)
@@ -322,7 +247,6 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
     # sns.set(font_scale=1,rc={"lines.linewidth":3})
 
     fig, axes = plt.subplots(1, 1, figsize=(4, 4), sharex=False)
-    # fig.suptitle("{} {}".format('VGG' if is_vgg else 'FCN', dataset.upper()))
 
     for i, stat in enumerate(["error"]):
         for j, setn in enumerate(["train"]):
@@ -338,7 +262,6 @@ def process_df(quant, dirname, stats_ref=None, args=None, args_model=None, save=
             df_plot = pd.melt(df_plot.reset_index(), id_vars="var")
             lp = sns.lineplot(
                 #data=rel_losses.min(axis=0).to_frame(name="loss"),
-                # data=df_plot_rel if not is_vgg else df_plot_rel.pivot(index="steps", columns=col_order).min(axis=0).to_frame(name="value"),
                 data=df_plot,
                 #hue="width",
                 hue="experiment",
@@ -515,7 +438,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiments', nargs='*', default=['A', 'B'], help='whitelist for the experiments to cat')
     parser.add_argument('--yscale', choices=["linear", "log"], default='linear', help='the scale for the y axis')
     parser.add_argument('dirs', nargs='*', help='the directories to process')
-    parser.add_argument('--split', action='store_true', help='split the err/loss figures in two')
+    parser.add_argument('--split', default=True, action='store_true', help='split the err/loss figures in two')
     parser.set_defaults(cpu=False)
 
 
