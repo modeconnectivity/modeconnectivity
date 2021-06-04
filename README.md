@@ -20,7 +20,7 @@ The datasets (MNIST, CIFAR-10) will be downloaded by PyTorch, default dataroot: 
 ## Workflow
 
 
-###Layer Inspection
+### Layer Inspection
 
 
 The scripts ```main_{mnist_fcn,cifar10_fcn,cifar10_vgg}.sh``` give the workflow
@@ -53,14 +53,14 @@ Plotting of the two:
 python plot_meta.py results/cifar10/
 ```
 
-###Path
+### Path
 
 Assuming having trained two models and run experiments A and B for both of them, a path connecting two solutions with bounded train loss can be constructed with
 ```bash
 python path.py --M1 model1/checkpoint.pth --M2 model2/checkpoint.pth  --nameA A --nameB B 
 ```
 
-###Varying Width Experiment
+### Varying Width Experiment
 
 
 To peform the varying width experiment, first models with different widths. Then, ``merge'' them using 
@@ -72,29 +72,6 @@ and plot them using
 python plot_widths.py path/to/model/merge/
 ```
 
-
-
-
-## Pre-trained Models TODO!
-
-You can download pretrained models here (TODO!):
-
-- [My awesome model](https://drive.google.com/mymodel.pth) trained on ImageNet using parameters x,y,z. 
-
-
-
-
-## Results TODO!
-
-Our model achieves the following performance on :
-###Layer Inspection
-![widths](https://github.com/modeconnectivity/modeconnectivity/blob/main/figures/layers.png?raw=true)
-
-###Path
-
-![widths](https://github.com/modeconnectivity/modeconnectivity/blob/main/figures/path.png?raw=true)
-###Widths
-![widths](https://github.com/modeconnectivity/modeconnectivity/blob/main/figures/widths.png?raw=true)
 
 
 ## Contributing
