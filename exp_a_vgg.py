@@ -38,8 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=5e-4, help="the weight decay for SGD (L2 pernalization)")
     parser.add_argument('--momentum', type=float, default=0.9, help="the momentum for SGD")
     parser.add_argument('--lr_update', '-lru', type=int, default=0, help='if any, the update of the learning rate')
-    parser.add_argument('--lr_mode', '-lrm', default="num_param_tot", choices=["max", "hessian", "num_param_tot", "num_param_train", "manual"], help="the mode of learning rate attribution")
-    parser.add_argument('--lr_step', '-lrs', type=int, default=30, help='the number of epochs for the lr scheduler')
+    parser.add_argument('--lr_step', '-lrs', type=int, default=20, help='the number of epochs for the lr scheduler')
     parser.add_argument('--lr_gamma',  type=float, default=0.5, help='the gamma mult factor for the lr scheduler')
     parser.add_argument('--nepoch', type=int, default=1000, help='the number of epochs to train for')
     parser.add_argument('--batch_size', '-bs', type=int, default=100, help='the dimension of the batch')
@@ -326,7 +325,10 @@ if __name__ == '__main__':
             classifier.features = nn.DataParallel(classifier.features)
             #classifier.new_sample()
             #model.classifier = nn.DataParallel(model.classifier
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step, gamma=args.lr_gamma)  # reduces the learning rate by half every 20 epochs
+        if args.lr_step == -1:
+            lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=args.lr_gamma)  # reduces the learning rate by half every 20 epochs
+        else:
+            lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step, gamma=args.lr_gamma)  # reduces the learning rate by half every 20 epochs
 
         if id_draw ==  start_id_draw:
 
@@ -404,7 +406,7 @@ if __name__ == '__main__':
             stop = (separated or epoch > start_epoch + args.nepoch)
 
 
-            if args.lr_step >0:
+            if args.lr_step != 0:
                 lr_scheduler.step()
 
 

@@ -16,18 +16,20 @@ sns.set(
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser('Creation and evaluation of a path connecting two solutions')
+    parser = argparse.ArgumentParser('Plotting of a path between two solutions')
     parser_device = parser.add_mutually_exclusive_group()
     parser_device.add_argument('--cpu', action='store_true', dest='cpu', help='force the cpu model')
     parser_device.add_argument('--cuda', action='store_false', dest='cpu')
-    parser.add_argument('--file', help = "the name of the computed path")
-    parser.add_argument('--yscale', choices=['log', 'linear'], help='the scale for the y axis')
+    parser.add_argument('--yscale', default="linear", choices=['log', 'linear'], help='the scale for the y axis')
     parser.add_argument('--split', action='store_true', help='split the plot into separated figures')
+    parser.add_argument('dir', help='the directory where the path is recorded')
     parser.set_defaults(cpu=False)
 
     args = parser.parse_args()
 
-    filename  = args.file
+    dirname = args.dir
+    filename = os.path.join(args.dir, 'A.csv')
+
     df = pd.read_csv(filename, header=[0,1,2], index_col=[0,1])
     split = args.split
     palette=sns.color_palette(n_colors=1)
@@ -37,8 +39,8 @@ if __name__ == "__main__":
     logstr = "_log" if yscale == "log" else ""
     df_ref = None
     df_ds = None
-    fref = os.path.join(os.path.dirname(filename), "ref.csv")
-    fds = os.path.join(os.path.dirname(filename), "ds.csv")
+    fref = os.path.join(dirname, "ref.csv")
+    fds = os.path.join(dirname, "B.csv")
     if os.path.isfile(fref):
         df_ref = pd.read_csv(fref, index_col=[0,1], header=[0])['0']
         df_ref.loc["error", :] *= 100
@@ -48,7 +50,7 @@ if __name__ == "__main__":
         df_ds.loc["error", :] *= 100
         df_ds_log = np.log10(df_ds)
     # xlabels =
-    output_root = os.path.join(os.path.dirnme(args.file))
+    output_root = dirname
     stat_idx = df.columns.names.index("stat")
     nlevels = df.columns.nlevels
     if "err" in df.columns.get_level_values("stat"):

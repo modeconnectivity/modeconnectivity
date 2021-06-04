@@ -3,14 +3,10 @@ import numpy as np
 import pandas as pd
 import os
 import sys
-from torchsummary import summary
-import torch.nn as nn
-from collections import defaultdict
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 matplotlib.style.use('ggplot')
-from matplotlib import cm
 import seaborn as sns
 sns.set(
     font_scale=1.5,
@@ -23,20 +19,14 @@ sns.set(
 # sns.set_theme()
 # sns.set_style('whitegrid')
 import glob
-import copy
 
-import math
 
-import models
-import random
 
 import torch.optim
 import torch
 import argparse
 import utils
 
-from sklearn.linear_model import LogisticRegression
-from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
 
 #from torchvision import models, datasets, transforms
@@ -185,7 +175,7 @@ def process_df(quant, dirname, quant_ref=None, args=None, args_model=None, save=
 
 
             df_plot = pd.melt(df_plot.reset_index(), id_vars="var")
-            xs = df_plot["width"].unique().astype(np.int)
+            xs = df_plot["width"].unique().astype(np.int32)
             df_ci_plot = df_ci_plot.loc[:, Idx[exp, stat, setn, xs]]
             lp = sns.lineplot(
                 #data=rel_losses.min(axis=0).to_frame(name="loss"),
@@ -570,7 +560,7 @@ if __name__ == '__main__':
     parser.add_argument('--vlim',  default=3, type=int, help='the number of variations to take')
     parser.add_argument('--zoom',  action='store_true',  help='if we zoom on the graph for A')
     parser.add_argument('dirs', nargs='*', help='the directories to process')
-    parser.add_argument('--split', action='store_true', help='split the err/loss figures in two')
+    parser.add_argument('--split', action='store_true', default=True, help='split the err/loss figures in two')
     parser.set_defaults(cpu=False)
 
 
@@ -583,7 +573,6 @@ if __name__ == '__main__':
 
 
     dtype = torch.float
-    num_gpus = torch.cuda.device_count()
 
     def get_parent(path):
         return os.path.basename(os.path.dirname(path))

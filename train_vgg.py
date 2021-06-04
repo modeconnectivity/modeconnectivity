@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', '-lr', type=float, nargs='*', default=[5e-3], help='leraning rate')
     parser.add_argument('--weight_decay', type=float, default=5e-4, help="the weight decay for SGD (L2 pernalization)")
     parser.add_argument('--momentum', type=float, default=0.9, help="the momentum for SGD")
-    parser.add_argument('--lr_step', '-lrs', type=int, default=0, help='the step for the learning rate scheduler')
+    parser.add_argument('--lr_step', '-lrs', type=int, default=10, help='the step for the learning rate scheduler')
     parser.add_argument('--lr_gamma', '-lrg', type=float, default=0.5, help='the step for the learning rate scheduler')
     parser.add_argument('--save_model', action='store_true', default=True, help='stores the model after some epochs')
     parser.add_argument('--nepoch', type=int, default=1000, help='the number of epochs to train for')

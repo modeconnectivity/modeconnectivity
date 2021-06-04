@@ -31,7 +31,7 @@ if __name__ == '__main__':
     parser.add_argument('--momentum', type=float, default=0.95, help="the momentum for SGD")
     parser.add_argument('--lr_update', '-lru', type=int, default=0, help='if any, the update of the learning rate')
     parser.add_argument('--lr_mode', '-lrm', default="manual", choices=["max", "hessian", "num_param_tot", "num_param_train", "manual"], help="the mode of learning rate attribution")
-    parser.add_argument('--lr_step', '-lrs', type=int, default=30, help='if any, the step for the learning rate scheduler')
+    parser.add_argument('--lr_step', '-lrs', type=int, default=0, help='if any, the step for the learning rate scheduler')
     parser.add_argument('--lr_gamma',  type=float, default=0.5, help='the gamma mult factor for the lr scheduler')
     parser.add_argument('--save_model', action='store_true', default=True, help='stores the model after some epochs')
     parser.add_argument('--nepoch', type=int, default=400, help='the number of epochs to train for')

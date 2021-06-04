@@ -132,13 +132,13 @@ def get_dataloader(train_dataset, test_dataset, batch_size,
     #indices = torch.randperm(len(train_dataset))
     indices = torch.arange(len(train_dataset))
     train_size = round(len(train_dataset))
+    if size_max is not None:
+        train_size = min(size_max, train_size)
 
     train_idx = indices[:train_size]
 
     train_sampler = SubsetRandomSampler(train_idx)
 
-    if size_max is not None:
-        train_size = min(size_max, train_size)
 
     if test_dataset is None:
         test_size = None

@@ -61,7 +61,7 @@ def eval_path(path, sizes, dirname):
     A.to(device)
     AB.to(device)
     B.to(device)
-    K = 2
+    K = 11
     lbdas = np.arange(1, K) / (K-1)
     index = pd.MultiIndex.from_product([range(len(path.points)), range(0, K-1)], names=["point", "t"])
     stats = ['loss', 'error']
@@ -79,6 +79,13 @@ def eval_path(path, sizes, dirname):
 
         if len(pt) == 1:
             param_A = pt[0].to(device)
+            nn.utils.vector_to_parameters(param_A, model.parameters())  # param_A from previous iteration
+            # print(f"error: {err}, loss: {loss}")
+            # if idx == 0:
+            loss, err = eval_epoch(model, train_loader)
+            loss_test, err_test = eval_epoch(model, test_loader)
+            stats.loc[(idx), 0] = loss, err, loss_test, err_test  # consider the index of the path at K-1 as the new point
+
             continue
         elif len(pt) == 2:
             # len(pt) == 2
@@ -142,6 +149,7 @@ def eval_path(path, sizes, dirname):
             # stats.loc[(idx-1+tidx//(K-1), tidx%(K-1))] = loss_test, err_test  # consider the index of the path at K-1 as the new point
 
             # model.to(torch.device('cpu'))
+    return stats
 
 def plot_path(stats, quant_ds, quant_ref,  dirname):
     # df_plot = pd.melt(stats.reset_index(), id_vars=["point", "t"], ignore_index=False)
@@ -508,8 +516,8 @@ if __name__ == "__main__":
     parser_device = parser.add_mutually_exclusive_group()
     parser_device.add_argument('--cpu', action='store_true', dest='cpu', help='force the cpu model')
     parser_device.add_argument('--cuda', action='store_false', dest='cpu')
-    parser.add_argument('--nameA', help = "name of the experiment A folder")
-    parser.add_argument('--nameB', help = "name of the experiment B folder")
+    parser.add_argument('--nameA', default='A', help = "name of the experiment A folder")
+    parser.add_argument('--nameB', default='B', help = "name of the experiment B folder")
     parser.add_argument('--M1', help="the first model to connect (checkpoint)")
     parser.add_argument('--M2', help="the second model to connect (checkpoint)")
     parser.add_argument('--output', help="directory for outputs (if None will be where the original models were)")
@@ -546,7 +554,7 @@ if __name__ == "__main__":
         test_loader, size_test  = utils.get_dataloader( train_dataset,
                                                        test_dataset, batch_size
                                                        =args_model.batch_size,
-                                                       size_max=None, #args_model.size_max,
+                                                       size_max=100, #args_model.size_max,
                                                        collate_fn=None,
                                                        pin_memory=True)
     paths = dict()
@@ -604,7 +612,7 @@ if __name__ == "__main__":
     connect_two_models(paths[1], models[1], models[2], sizes)
 
     paths[1].extend(paths[2])  # terminate the path 1 with path 2
-    dname = args.output if args.output is not None else os.path.join(os.path.commonpath(args.M1,args.M2), "path")
+    dname = args.output if args.output is not None else os.path.join(os.path.commonpath([args.M1,args.M2]), "path")
     os.makedirs(dname, exist_ok=True)
     quant_ds.to_csv(os.path.join(dname, "B.csv"))
     quant_ref.to_csv(os.path.join(dname, "ref.csv"))
