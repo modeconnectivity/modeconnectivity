@@ -61,7 +61,7 @@ def eval_path(path, sizes, dirname):
     A.to(device)
     AB.to(device)
     B.to(device)
-    K = 11
+    K = 2
     lbdas = np.arange(1, K) / (K-1)
     index = pd.MultiIndex.from_product([range(len(path.points)), range(0, K-1)], names=["point", "t"])
     stats = ['loss', 'error']
@@ -512,6 +512,7 @@ if __name__ == "__main__":
     parser.add_argument('--nameB', help = "name of the experiment B folder")
     parser.add_argument('--M1', help="the first model to connect (checkpoint)")
     parser.add_argument('--M2', help="the second model to connect (checkpoint)")
+    parser.add_argument('--output', help="directory for outputs (if None will be where the original models were)")
     parser.set_defaults(cpu=False)
 
     args = parser.parse_args()
@@ -520,10 +521,10 @@ if __name__ == "__main__":
     gpu_index = random.choice(range(num_gpus)) if num_gpus > 0  else 0
     device = torch.device('cuda' if use_cuda else 'cpu', gpu_index)
 
-    fn_log_model = os.path.join(os.path.dirname(args.A), 'logs.txt')
+    fn_log_model = os.path.join(os.path.dirname(args.M1), 'logs.txt')
     archi_model = utils.parse_archi(fn_log_model)
-    fn_model =  args.A
-    chkpt_model = torch.load(fn_model, map_location=torch.device('cpu'))
+    fn_model =  args.M1
+    chkpt_model = torch.load(fn_model, map_location=lambda storage, location: storage)
     model = copy.deepcopy(utils.construct_FCN(archi_model))
     path = Path(model)
     args_model = chkpt_model["args"]
@@ -535,16 +536,14 @@ if __name__ == "__main__":
     ntry = 1
 
     imresize=None
-    train_dataset, valid_dataset , test_dataset, num_chs = utils.get_dataset(dataset=args_model.dataset,
+    train_dataset, test_dataset, num_chs = utils.get_dataset(dataset=args_model.dataset,
                                                           dataroot=args_model.dataroot,
                                                              imresize =imresize,
                                                             normalize= args_model.normalize if hasattr(args_model, 'normalize') else False,
                                                              )
     # print('Transform: {}'.format(train_dataset.transform), file=logs, flush=True)
     train_loader, size_train,\
-        val_loader, size_val,\
         test_loader, size_test  = utils.get_dataloader( train_dataset,
-                                                       valid_dataset,
                                                        test_dataset, batch_size
                                                        =args_model.batch_size,
                                                        size_max=None, #args_model.size_max,
@@ -564,13 +563,13 @@ if __name__ == "__main__":
         dir_expB = os.path.join(dir_model, args.nameB)
 
         fn_ds =  os.path.join(dir_expB, "eval_copy.pth")  # the filename for the experiment B
-        chkpt_ds = torch.load(fn_ds, map_location=torch.device('cpu'))
+        chkpt_ds = torch.load(fn_ds, map_location=lambda storage, loc: storage)
         quant = chkpt_ds["quant"]
         quant_ref = pd.concat([quant_ref, quant.loc[1, Idx[0, :, :]].to_frame().transpose()], ignore_index=True, axis=0)
         idx_max = quant.loc[:, Idx[1:, "loss", "train"]].idxmax(axis=1)
         idx_ds = quant[idx_max].idxmin()
         quant_ds = pd.concat([quant_ds, quant.loc[idx_ds[1][0], Idx[idx_ds.keys()[1][0], :, :]].to_frame().transpose()], ignore_index=True, axis=0)  # select the step and the layer that define the bound
-        chkpt_model = torch.load(fn_model, map_location=torch.device('cpu'))
+        chkpt_model = torch.load(fn_model, map_location=lambda storage, loc: storage)
         model.load_state_dict(chkpt_model['model'])
         paths[mid] = Path(model)
         path = paths[mid]
@@ -581,7 +580,7 @@ if __name__ == "__main__":
         for eid in range(n_layer, -1, -1):
             fn_log_sol =  os.path.join(dir_expA, f"logs_entry_{eid}.txt")
             fn_solution = os.path.join(dir_expA, f"checkpoint_entry_{eid}.pth")
-            chkpt = torch.load(fn_solution, map_location=args.device)
+            chkpt = torch.load(fn_solution, map_location=lambda storage, loc: storage)
             archi_sol = utils.parse_archi(fn_log_sol)
             solution = utils.construct_classifier(archi_sol)
             solution.load_state_dict(chkpt['classifier'])
@@ -605,11 +604,12 @@ if __name__ == "__main__":
     connect_two_models(paths[1], models[1], models[2], sizes)
 
     paths[1].extend(paths[2])  # terminate the path 1 with path 2
-    dname = args.output if args.output is not None else os.path.join(args_model.output_root, "path")
-    quant_ds.to_csv(os.path.join(dname, "ds.csv"))
+    dname = args.output if args.output is not None else os.path.join(os.path.commonpath(args.M1,args.M2), "path")
+    os.makedirs(dname, exist_ok=True)
+    quant_ds.to_csv(os.path.join(dname, "B.csv"))
     quant_ref.to_csv(os.path.join(dname, "ref.csv"))
     stats = eval_path(paths[1], sizes, dirname=dname)
-    stats.to_csv(os.path.join(dname, f'path.csv'))
+    stats.to_csv(os.path.join(dname, f'A.csv'))
 
 
 

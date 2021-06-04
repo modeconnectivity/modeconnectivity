@@ -290,8 +290,6 @@ if __name__ == '__main__':
     #device = torch.device('cpu')
 
 
-    dtype = torch.float
-    num_gpus = torch.cuda.device_count()
 
     def get_parent(path):
         return os.path.basename(os.path.dirname(path))

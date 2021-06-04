@@ -126,7 +126,7 @@ def get_dataset(dataset='mnist', dataroot='data/', imresize=None, augment=False,
 
 def get_dataloader(train_dataset, test_dataset, batch_size,
                   size_max=None, collate_fn=None, num_workers=4,
-                   pin_memory=False):
+                   pin_memory=True):
     '''ss_factor: for the valid set'''
 
     #indices = torch.randperm(len(train_dataset))
@@ -451,7 +451,7 @@ def parse_archi(fname, *args):
 
     nets = {}
 
-    net_re = re.compile('(Model|Linear classifier):')
+    net_re = re.compile('(Model|Annex classifier):')
     LAYERS = {
         'Linear': nn.Linear,
         'BatchNorm1d': nn.BatchNorm1d,
@@ -465,6 +465,9 @@ def parse_archi(fname, *args):
         'Bilinear': nn.Bilinear,
         'ReLU': nn.ReLU,
         'ELU': nn.ELU,
+        'RandomSamplerParallel': models.classifiers.RandomSamplerParallel,
+        'RandomSampler': models.classifiers.RandomSampler,
+        'MultiLinear': models.classifiers.MultiLinear,
     }
 
     depth = 0
@@ -518,12 +521,31 @@ def parse_archi(fname, *args):
 
                     layer_type = fields[1][:fields[1].find('(')].strip()
                     layer_args = fields[1][fields[1].find('(')+1:].strip().rstrip(')') # leave trailing )
-                    args, kwargs = parse_layer_args(layer_args)
+                    if layer_type == "RandomSamplerParallel":
+                        r = re.compile(',|/')
+                        rsp = r.split(layer_args)
+                        rsp = [r.strip('()').split('=') for r in rsp]
+                        kwargs = {}
+                        for kw in rsp:
+                            if len(kw) == 2:
+                                key,val = kw[0].strip(), kw[1].strip()
+                                val = cast(val.strip())
+                                kwargs[key] = val
+                            else:
+                                val, key= kw[0].strip().split(' ')  # e.g. 500 total
+                                kwargs[key] = cast(val)
+                        kwargs["remove"] = kwargs["total"] - kwargs["kept features"]
+                        kwargs.pop("kept features")
+                        args = []
+                    else:
+                        args, kwargs = parse_layer_args(layer_args)
                     try:
                         nn_layers.append((layer_name, LAYERS[layer_type](*args, **kwargs)))
                     except TypeError as e:
                         print(e)
-                        print(layer_type)
+                        print("Layer type:", layer_type)
+
+
                 if depth == 1:  # end of sequential
                     net[module_name] = nn_module_type(OrderedDict(nn_layers)) # is sequential
                     nn_layers = []
@@ -545,6 +567,23 @@ def construct_FCN(archi):
             return self.main(x.view(x.size(0), -1))
 
     return FCN(archi['main'])
+
+def construct_classifier(archi):
+
+    class ClassifierFCN(nn.Module):
+
+        def __init__(self, network):
+            super().__init__()
+            self.network = network
+
+        def forward(self, x):
+            x=x.view(x.size(0), -1)
+            out = self.network(x)
+            return out
+
+    return ClassifierFCN(archi['network'])
+
+
 
 
 
